@@ -12,9 +12,7 @@ app = FastAPI()
 BASE_URL = "https://api.setlist.fm/rest/"
 SETLIST_API_KEY = os.getenv("SETLIST_API_KEY", "")
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
-SPOTIPY_CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID", "")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
-SPOTIPY_CLIENT_SECRET = os.getenv("SPOTIPY_CLIENT_SECRET", "")
 SPOTIFY_REDIRECT_URI = "http://localhost:8888/callback"
 
 # Spotify authentication
@@ -29,7 +27,11 @@ sp = spotipy.Spotify(
 
 
 @app.get("/search/{name}")
-def search_setlist(name):
+def search_setlists(name):
+    """
+    Receives an artist name
+    Returns the 3 last full setlists and the compilated list of songs of those setlists
+    """
     path = f"1.0/search/setlists?artistName={name}"
     url = BASE_URL + path
     headers = {"x-api-key": SETLIST_API_KEY, "accept": "application/json"}
@@ -38,10 +40,36 @@ def search_setlist(name):
 
     # Check if the request was successful
     if response.status_code == 200:
-        # Return the JSON response directly if successful
-        return response.json()
+        data = response.json()
+        setlists = data.get("setlist", [])
+        unique_songs = set()
+        recent_setlists = []
+        valid_setlists = []
+
+        for setlist in setlists:
+            sets = setlist.get("sets", {}).get("set", [])
+            if sets:  # Ensure the setlist has actual songs
+                valid_setlists.append(setlist)
+            if len(valid_setlists) == 3:
+                break
+
+        for setlist in valid_setlists:
+            songs = [
+                song["name"]
+                for s in setlist.get("sets", {}).get("set", [])
+                for song in s.get("song", [])
+            ]
+            unique_songs.update(songs)
+            recent_setlists.append(
+                {
+                    "eventDate": setlist.get("eventDate"),
+                    "venue": setlist.get("venue", {}).get("name"),
+                    "songs": songs,
+                }
+            )
+
+        return {"recent_setlists": recent_setlists, "unique_songs": list(unique_songs)}
     else:
-        # If the request failed, return an error response
         print(response.text)
         return {"error": "Failed to fetch data", "status_code": response.status_code}
 
@@ -69,18 +97,18 @@ def fetch_setlist(id):
 
 
 @app.post("/create-playlist/{artist}/")
-def creatcrmee_spotify_playlist(artist: str, setlist_id: str):
+def create_spotify_playlist(artist: str):
+    """
+    Receives an artist name
+    Returns the playlist url of the setlist
+    """
     user_id = sp.me()["id"]
-    setlist = search_setlist(artist)
-    setlist_id = ""
-    if setlist:
-        first_setlist = setlist.get("setlist", {})[0]
-        setlist_id = first_setlist.get("id", "") if first_setlist else ""
-    songs = fetch_setlist(setlist_id)
-    if "error" in songs:
-        return songs
+    setlist = search_setlists(artist)
+    if not setlist and not setlist.get("unique_songs"):
+        return f"No setlist found for {artist}"
 
-    playlist_name = f"{artist} - Live Setlist"
+    songs = setlist.get("unique_songs")
+    playlist_name = f"{artist} - Setlist"
     playlist = sp.user_playlist_create(user=user_id, name=playlist_name, public=True)
     playlist_id = playlist["id"]
 
