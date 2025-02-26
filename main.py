@@ -42,7 +42,7 @@ def search_setlists(name):
     if response.status_code == 200:
         data = response.json()
         setlists = data.get("setlist", [])
-        unique_songs = set()
+        unique_songs = []
         recent_setlists = []
         valid_setlists = []
 
@@ -59,7 +59,9 @@ def search_setlists(name):
                 for s in setlist.get("sets", {}).get("set", [])
                 for song in s.get("song", [])
             ]
-            unique_songs.update(songs)
+            for song in songs:
+                if song not in unique_songs:
+                    unique_songs.append(song)
             recent_setlists.append(
                 {
                     "eventDate": setlist.get("eventDate"),
