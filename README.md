@@ -38,24 +38,24 @@ Ensure you have the necessary credentials:
   - Click **Create Credentials** > **OAuth Client ID**.
   - Select **TVs and Limited Input devices**
 
-  5. Authenticate using `ytmusicapi`:
+  4. Authenticate using `ytmusicapi`:
 
-  Run and follow the instructions
+     Run and follow the instructions
+
+     ```sh
+     ytmusicapi oauth
+     ```
+
+  Set up the env variables:
 
   ```sh
-  ytmusicapi oauth
+  export SETLIST_API_KEY="your-setlist-api-key"
+  export SPOTIFY_CLIENT_ID="your-spotify-client-id"
+  export SPOTIFY_CLIENT_SECRET="your-spotify-client-secret"
+  export SPOTIFY_REDIRECT_URI="your-redirect-uri"
+  export GOOGLE_CLIENT_ID="your-google-client-id"
+  export GOOGLE_CLIENT_SECRET="your-google-client-secret"
   ```
-
-Set up the env variables:
-
-```sh
-export SETLIST_API_KEY="your-setlist-api-key"
-export SPOTIFY_CLIENT_ID="your-spotify-client-id"
-export SPOTIFY_CLIENT_SECRET="your-spotify-client-secret"
-export SPOTIFY_REDIRECT_URI="your-redirect-uri"
-export GOOGLE_CLIENT_ID="your-google-client-id"
-export GOOGLE_CLIENT_SECRET="your-google-client-secret"
-```
 
 ### 4. Run the Application
 
