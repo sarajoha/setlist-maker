@@ -3,6 +3,8 @@ import requests
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from ytmusicapi import YTMusic, OAuthCredentials
+from ytmusicapi.enums import ResponseStatus
 
 from fastapi import FastAPI
 
@@ -14,6 +16,8 @@ SETLIST_API_KEY = os.getenv("SETLIST_API_KEY", "")
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
 SPOTIFY_REDIRECT_URI = "http://localhost:8888/callback"
+YT_CLIENT_ID = os.getenv("YT_CLIENT_ID", "")
+YT_CLIENT_SECRET = os.getenv("YT_CLIENT_SECRET", "")
 
 # Spotify authentication
 sp = spotipy.Spotify(
@@ -23,6 +27,14 @@ sp = spotipy.Spotify(
         redirect_uri=SPOTIFY_REDIRECT_URI,
         scope="playlist-modify-public",
     )
+)
+
+# YouTube Music authentication
+yt = YTMusic(
+    "oauth.json",
+    oauth_credentials=OAuthCredentials(
+        client_id=YT_CLIENT_ID, client_secret=YT_CLIENT_SECRET
+    ),
 )
 
 
@@ -64,6 +76,7 @@ def search_setlists(name):
                     unique_songs.append(song)
             recent_setlists.append(
                 {
+                    "artist": setlist.get("artist", {}).get("name"),
                     "eventDate": setlist.get("eventDate"),
                     "venue": setlist.get("venue", {}).get("name"),
                     "songs": songs,
@@ -109,8 +122,9 @@ def create_spotify_playlist(artist: str):
     if not setlist and not setlist.get("unique_songs"):
         return f"No setlist found for {artist}"
 
+    artist_name = setlist["recent_setlists"][0]["artist"]
     songs = setlist.get("unique_songs")
-    playlist_name = f"{artist} - Setlist"
+    playlist_name = f"{artist_name} - Setlist"
     playlist = sp.user_playlist_create(user=user_id, name=playlist_name, public=True)
     playlist_id = playlist["id"]
 
@@ -130,3 +144,44 @@ def create_spotify_playlist(artist: str):
         }
     else:
         return {"error": "No matching songs found on Spotify."}
+
+
+@app.post("/create-youtube-playlist/{artist}")
+def create_youtube_playlist(artist: str):
+    setlist = search_setlists(artist)
+    if not setlist and not setlist.get("unique_songs"):
+        return f"No setlist found for {artist}"
+
+    artist = setlist["recent_setlists"][0]["artist"]
+    songs = setlist["unique_songs"]
+
+    playlist_name = f"{artist} - Setlist"
+    playlist_id = yt.create_playlist(playlist_name, "Generated from Setlist Maker")
+
+    video_ids = []
+    for song in songs:
+        search_results = yt.search(f"{song} {artist}", filter="songs", limit=1)
+        if search_results:
+            video_id = search_results[0]["videoId"]
+            if video_id not in video_ids:  # Avoid duplicates
+                video_ids.append(video_id)
+
+    if video_ids:
+        response = yt.add_playlist_items(playlist_id, video_ids)
+        if response["status"] == ResponseStatus.SUCCEEDED:
+            return {
+                "message": "YouTube Music playlist created successfully!",
+                "playlist_url": f"https://music.youtube.com/playlist?list={playlist_id}",
+            }
+        error_message = (
+            response.get("error", {})
+            .get("actions", [{}])[0]
+            .get("confirmDialogEndpoint", {})
+            .get("content", {})
+            .get("confirmDialogRenderer", {})
+            .get("dialogMessages", [{}])[0]
+            .get("runs", [{}])[0]
+            .get("text", "Unknown error")
+        )
+        return {"error": error_message}
+    return {"error": "No matching songs found on YouTube Music."}
