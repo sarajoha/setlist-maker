@@ -13,29 +13,6 @@ app = FastAPI()
 
 BASE_URL = "https://api.setlist.fm/rest/"
 SETLIST_API_KEY = os.getenv("SETLIST_API_KEY", "")
-SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
-SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
-SPOTIFY_REDIRECT_URI = "http://localhost:8888/callback"
-YT_CLIENT_ID = os.getenv("YT_CLIENT_ID", "")
-YT_CLIENT_SECRET = os.getenv("YT_CLIENT_SECRET", "")
-
-# Spotify authentication
-sp = spotipy.Spotify(
-    auth_manager=SpotifyOAuth(
-        client_id=SPOTIFY_CLIENT_ID,
-        client_secret=SPOTIFY_CLIENT_SECRET,
-        redirect_uri=SPOTIFY_REDIRECT_URI,
-        scope="playlist-modify-public",
-    )
-)
-
-# YouTube Music authentication
-yt = YTMusic(
-    "oauth.json",
-    oauth_credentials=OAuthCredentials(
-        client_id=YT_CLIENT_ID, client_secret=YT_CLIENT_SECRET
-    ),
-)
 
 
 @app.get("/search/{name}")
@@ -117,6 +94,20 @@ def create_spotify_playlist(artist: str):
     Receives an artist name
     Returns the playlist url of the setlist
     """
+    SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
+    SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
+    SPOTIFY_REDIRECT_URI = "http://localhost:8888/callback"
+
+    # Spotify authentication
+    sp = spotipy.Spotify(
+        auth_manager=SpotifyOAuth(
+            client_id=SPOTIFY_CLIENT_ID,
+            client_secret=SPOTIFY_CLIENT_SECRET,
+            redirect_uri=SPOTIFY_REDIRECT_URI,
+            scope="playlist-modify-public",
+        )
+    )
+
     user_id = sp.me()["id"]
     setlist = search_setlists(artist)
     if not setlist and not setlist.get("unique_songs"):
@@ -148,6 +139,18 @@ def create_spotify_playlist(artist: str):
 
 @app.post("/create-youtube-playlist/{artist}")
 def create_youtube_playlist(artist: str):
+    """
+    Receives an artist name
+    Returns the playlist url of the setlist
+    """
+    YT_CLIENT_ID = os.getenv("YT_CLIENT_ID", "")
+    YT_CLIENT_SECRET = os.getenv("YT_CLIENT_SECRET", "")
+    yt = YTMusic(
+        "oauth.json",
+        oauth_credentials=OAuthCredentials(
+            client_id=YT_CLIENT_ID, client_secret=YT_CLIENT_SECRET
+        ),
+    )
     setlist = search_setlists(artist)
     if not setlist and not setlist.get("unique_songs"):
         return f"No setlist found for {artist}"
