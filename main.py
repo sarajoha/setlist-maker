@@ -13,6 +13,7 @@ app = FastAPI()
 
 BASE_URL = "https://api.setlist.fm/rest/"
 SETLIST_API_KEY = os.getenv("SETLIST_API_KEY", "")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
 
 @app.get("/search/{name}")
@@ -143,6 +144,9 @@ def create_youtube_playlist(artist: str):
     Receives an artist name
     Returns the playlist url of the setlist
     """
+    if ENVIRONMENT != "development":
+        return {"error": "Only available for development environment"}
+
     YT_CLIENT_ID = os.getenv("YT_CLIENT_ID", "")
     YT_CLIENT_SECRET = os.getenv("YT_CLIENT_SECRET", "")
     yt = YTMusic(
