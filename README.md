@@ -88,7 +88,9 @@ For more information on setup and usage, refer to their documentation.
 - [x] Create playlist in Spotify based on a setlist
 - [x] Create playlist in Spotify based on the last 3 or 5 setlists, including rare songs
 - [x] Create playlist in YouTube Music based on setlist
-- [ ] Make a simple UI in Streamlit
+- [x] Make a simple UI in Streamlit
+- [ ] Make sure UI adheres to Spotify's terms of service
+- [x] Disable youtube music playlist creation for Production, leave only on dev
 - [ ] Map tours and concerts by band
 - [ ] Create a setlist for a specific concert
 - [ ] Create a setlist from a date range or tour of a band
