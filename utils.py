@@ -68,7 +68,9 @@ def get_auth_manager(request: Request):
 def get_spotify_client(request: Request, response: Response):
     auth_manager = get_auth_manager(request)
 
-    if not auth_manager.validate_token(auth_manager.cached_token):
+    token_info = auth_manager.cache_handler.get_cached_token()
+
+    if not auth_manager.validate_token(token_info):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated with Spotify",
