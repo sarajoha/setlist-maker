@@ -1,12 +1,18 @@
 import os
 import requests
-from dotenv import load_dotenv
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-from ytmusicapi import YTMusic, OAuthCredentials
-from ytmusicapi.enums import ResponseStatus
 
-from fastapi import FastAPI
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request, Response, Depends
+from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
+from typing import Optional
+from ytmusicapi.enums import ResponseStatus
+from ytmusicapi import YTMusic, OAuthCredentials
+
+from utils import get_auth_manager, get_spotify_client, CookieCache
+
 
 load_dotenv()
 app = FastAPI()
@@ -14,6 +20,27 @@ app = FastAPI()
 BASE_URL = "https://api.setlist.fm/rest/"
 SETLIST_API_KEY = os.getenv("SETLIST_API_KEY", "")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "")
+origins = [origin.strip() for origin in allowed_origins.split(",") if origin.strip()]
+
+if not origins and os.getenv("ENVIRONMENT") == "development":
+    origins = ["http://localhost:8501", "http://127.0.0.1:8501"]
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+secret_key = os.getenv("SECRET_KEY")
+if not secret_key and os.getenv("ENVIRONMENT") == "production":
+    raise ValueError("SECRET_KEY environment variable not set")
+
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
 
 
 @app.get("/search/{name}")
@@ -89,26 +116,61 @@ def fetch_setlist(id):
     return {"error": "No setlist found", "status_code": response.status_code}
 
 
+# Route to initiate login
+@app.get("/login")
+async def login(
+    request: Request, redirect_to_streamlit: bool = False, artist: str = None
+):
+    auth_manager = get_auth_manager(request)
+    auth_url = auth_manager.get_authorize_url()
+
+    # If this is called from Streamlit, we'll need to return to Streamlit after auth
+    if redirect_to_streamlit:
+        # Store artist in a server-side session if needed
+        request.session["pending_artist"] = artist
+        # We'll redirect back to Streamlit after authentication
+        return RedirectResponse(url=auth_url)
+
+    return RedirectResponse(url=auth_url)
+
+
+@app.get("/callback")
+async def callback(request: Request, response: Response, code: Optional[str] = None):
+    if code is None:
+        return {"error": "No code provided"}
+
+    auth_manager = get_auth_manager(request)
+    token_info = auth_manager.get_access_token(code)
+
+    # Save token to cookie
+    cache_handler = CookieCache()
+    cache_handler.save_token_to_cache(token_info, response)
+
+    # Check if we need to redirect back to Streamlit
+    if request.session.get("pending_artist"):
+        artist = request.session.get("pending_artist")
+        streamlit_url = os.getenv("STREAMLIT_URL")
+        # Append query parameters to indicate successful auth
+        redirect_url = f"{streamlit_url}?auth_success=true&artist={artist}"
+        return RedirectResponse(url=redirect_url)
+
+    # Default success page
+    return RedirectResponse(url="/success")
+
+
+@app.get("/success")
+async def success():
+    return {"message": "Successfully authenticated with Spotify!"}
+
+
 @app.post("/create-playlist/{artist}/")
-def create_spotify_playlist(artist: str):
+def create_spotify_playlist(
+    artist: str, sp: spotipy.Spotify = Depends(get_spotify_client)
+):
     """
     Receives an artist name
     Returns the playlist url of the setlist
     """
-    SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
-    SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
-    SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "")
-
-    # Spotify authentication
-    sp = spotipy.Spotify(
-        auth_manager=SpotifyOAuth(
-            client_id=SPOTIFY_CLIENT_ID,
-            client_secret=SPOTIFY_CLIENT_SECRET,
-            redirect_uri=SPOTIFY_REDIRECT_URI,
-            scope="playlist-modify-public",
-        )
-    )
-
     user_id = sp.me()["id"]
     setlist = search_setlists(artist)
     if not setlist and not setlist.get("unique_songs"):
