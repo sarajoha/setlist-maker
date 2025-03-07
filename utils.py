@@ -34,14 +34,15 @@ class CookieCache(CacheHandler):
     def save_token_to_cache(self, token_info, response=None):
         """Save token to both cache and response cookies"""
         self._cached_token = token_info  # Store token internally
-        response.set_cookie(
-            key=self.cookie_name,
-            value=json.dumps(token_info),
-            httponly=True,
-            max_age=3600,
-            secure=os.getenv("SECURE_COOKIE"),
-            samesite="lax",
-        )
+        if response:
+            response.set_cookie(
+                key=self.cookie_name,
+                value=json.dumps(token_info),
+                httponly=True,
+                max_age=3600,
+                secure=os.getenv("SECURE_COOKIE", "False") == "True",
+                samesite="lax",
+            )
 
 
 # Create the auth manager with our cached instance
