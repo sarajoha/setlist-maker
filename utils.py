@@ -58,8 +58,6 @@ def get_auth_manager(request: Request):
         show_dialog=True,
     )
 
-    # Check if token is already in the cache
-    token_info = cache_handler.get_cached_token(request)
     if token_info:
         auth_manager.cached_token = token_info
 
