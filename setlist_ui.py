@@ -11,6 +11,12 @@ SPOTIFY_AUTH_URL = f"{BACKEND_URL}/login"
 
 st.title("Setlist Maker 🎶")
 
+# Disable WebSocket compression
+st.config.set_option("server.enableWebsocketCompression", False)
+st.config.set_option("server.enableCORS", False)  # Disable CORS issues
+st.config.set_option("server.enableXsrfProtection", False)  # Disable XSRF protection
+st.config.set_option("server.headless", True)
+
 # Initialize session state variables if they don't exist
 if "auth_completed" not in st.session_state:
     st.session_state.auth_completed = False
