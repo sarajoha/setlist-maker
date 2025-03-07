@@ -140,7 +140,10 @@ async def callback(request: Request, response: Response, code: Optional[str] = N
         return {"error": "No code provided"}
 
     auth_manager = get_auth_manager(request)
-    token_info = auth_manager.get_access_token(code)
+    token_info = auth_manager.get_access_token(code=code, check_cache=False)
+
+    if not token_info:
+        return {"error": "Failed to retrieve access token from Spotify."}
 
     # Save token to cookie
     cache_handler = CookieCache()

@@ -18,14 +18,22 @@ SCOPE = "playlist-modify-public"
 class CookieCache(CacheHandler):
     def __init__(self, cookie_name="spotify_auth"):
         self.cookie_name = cookie_name
+        self._cached_token = None  # Internal storage for Spotipy compatibility
 
-    def get_cached_token(self, request):
+    def get_cached_token(self):
+        """Spotipy-compatible method to get cached token"""
+        return self._cached_token
+
+    def load_from_request(self, request):
+        """Custom method to load token from request cookies"""
         cookie = request.cookies.get(self.cookie_name)
         if cookie:
-            return json.loads(cookie)
-        return None
+            self._cached_token = json.loads(cookie)
+        return self._cached_token
 
     def save_token_to_cache(self, token_info, response):
+        """Save token to both cache and response cookies"""
+        self._cached_token = token_info  # Store token internally
         response.set_cookie(
             key=self.cookie_name,
             value=json.dumps(token_info),
@@ -39,6 +47,8 @@ class CookieCache(CacheHandler):
 # Create the auth manager with our cached instance
 def get_auth_manager(request: Request):
     cache_handler = CookieCache()
+    token_info = cache_handler.load_from_request(request)  # Load from request cookies
+
     auth_manager = SpotifyOAuth(
         client_id=SPOTIFY_CLIENT_ID,
         client_secret=SPOTIFY_CLIENT_SECRET,
