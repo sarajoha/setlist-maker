@@ -5,17 +5,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Define backend API URLs
-BACKEND_URL = os.getenv("BACKEND_URL")
-SPOTIFY_AUTH_URL = f"{BACKEND_URL}/login"
-
-st.title("Setlist Maker 🎶")
+st.set_page_config(page_title="Setlist Maker", page_icon="🎶")
 
 # Disable WebSocket compression
 st.config.set_option("server.enableWebsocketCompression", False)
 st.config.set_option("server.enableCORS", False)  # Disable CORS issues
 st.config.set_option("server.enableXsrfProtection", False)  # Disable XSRF protection
 st.config.set_option("server.headless", True)
+
+# Define backend API URLs
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+SPOTIFY_AUTH_URL = f"{BACKEND_URL}/login"
+
+st.title("Setlist Maker 🎶")
+
 
 # Initialize session state variables if they don't exist
 if "auth_completed" not in st.session_state:
