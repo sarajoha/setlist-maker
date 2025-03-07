@@ -31,7 +31,7 @@ class CookieCache(CacheHandler):
             self._cached_token = json.loads(cookie)
         return self._cached_token
 
-    def save_token_to_cache(self, token_info, response):
+    def save_token_to_cache(self, token_info, response=None):
         """Save token to both cache and response cookies"""
         self._cached_token = token_info  # Store token internally
         response.set_cookie(
