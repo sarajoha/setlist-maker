@@ -7,15 +7,10 @@ load_dotenv()
 
 st.set_page_config(page_title="Setlist Maker", page_icon="🎶")
 
-# Disable WebSocket compression
-st.config.set_option("server.enableWebsocketCompression", False)
-st.config.set_option("server.enableCORS", False)  # Disable CORS issues
-st.config.set_option("server.enableXsrfProtection", False)  # Disable XSRF protection
-st.config.set_option("server.headless", True)
-
 # Define backend API URLs
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 SPOTIFY_AUTH_URL = f"{BACKEND_URL}/login"
+SPOTIFY_LOGOUT_URL = f"{BACKEND_URL}/logout"
 
 st.title("Setlist Maker 🎶")
 
@@ -23,6 +18,8 @@ st.title("Setlist Maker 🎶")
 # Initialize session state variables if they don't exist
 if "auth_completed" not in st.session_state:
     st.session_state.auth_completed = False
+if "cookies" not in st.session_state:
+    st.session_state.cookies = {}
 if "artist" not in st.session_state:
     st.session_state.artist = ""
 
@@ -38,9 +35,15 @@ if "auth_success" in query_params and query_params["auth_success"][0] == "true":
     st.session_state.auth_completed = True
     st.success("Successfully authenticated with Spotify!")
 
-    # If we had an artist stored and auth is complete, can offer to create playlist
-    if st.session_state.artist:
-        st.write(f"Ready to create playlist for {st.session_state.artist}")
+# **🔹 Login Button (Appears if user is not authenticated)**
+if not st.session_state.auth_completed:
+    if st.button("Log in to Spotify 🎧"):
+        st.markdown(
+            f"[Click here to authenticate with Spotify]({SPOTIFY_AUTH_URL}?redirect_to_streamlit=true)"
+        )
+        st.info(
+            "You'll be redirected to Spotify for authentication. After authenticating, you'll return to this app."
+        )
 
 # Search for setlists
 artist = st.text_input(
@@ -70,37 +73,31 @@ if st.button("Search Setlists"):
     else:
         st.error("Failed to fetch setlists.")
 
-# Create Spotify Playlist - with auth flow
+# **🔹 Playlist Creation Button**
 if st.button("Create Spotify Playlist"):
     if not st.session_state.auth_completed:
-        # First need to authenticate - open login window and store current artist
-        st.session_state.artist = artist
-        spotify_auth_url = (
-            f"{SPOTIFY_AUTH_URL}?redirect_to_streamlit=true&artist={artist}"
-        )
-        st.markdown(f"[Click here to authenticate with Spotify]({spotify_auth_url})")
-        st.info(
-            "You'll be redirected to Spotify for authentication. After authenticating, you'll return to this app."
-        )
+        st.error("⚠️ You need to log in to Spotify first before creating a playlist.")
     else:
-        # Already authenticated, can create playlist
         response = requests.post(
-            f"{BACKEND_URL}/create-playlist/{st.session_state.artist}/",
-            cookies=st.session_state.get("cookies", {}),  # Pass any cookies we have
+            f"{BACKEND_URL}/create-playlist/{artist}/",
+            cookies=st.session_state.get("cookies", {}),
         )
 
         if response.status_code == 200:
             data = response.json()
             if "playlist_url" in data:
-                st.success(f"Playlist Created! [Open Playlist]({data['playlist_url']})")
+                st.success(
+                    f"✅ Playlist Created! [Open Playlist]({data['playlist_url']})"
+                )
             else:
-                st.error(data.get("error", "Failed to create playlist."))
+                st.error(data.get("error", "⚠️ Failed to create playlist."))
         else:
-            st.error(f"Error contacting backend: {response.text}")
+            st.error(f"⚠️ Error contacting backend: {response.text}")
 
-# Add a logout button when authenticated
+# **🔹 Logout Button (Appears if user is authenticated)**
 if st.session_state.auth_completed:
-    if st.button("Logout from Spotify"):
+    if st.button("Logout from Spotify 🚪"):
+        requests.get(SPOTIFY_LOGOUT_URL)  # Call backend logout
         st.session_state.auth_completed = False
         st.session_state.cookies = {}
         st.experimental_rerun()
