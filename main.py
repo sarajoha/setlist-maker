@@ -20,6 +20,7 @@ app = FastAPI()
 BASE_URL = "https://api.setlist.fm/rest/"
 SETLIST_API_KEY = os.getenv("SETLIST_API_KEY", "")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+STREAMLIT_URL = os.getenv("STREAMLIT_URL", "")
 
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "")
 origins = [origin.strip() for origin in allowed_origins.split(",") if origin.strip()]
@@ -90,7 +91,6 @@ def search_setlists(name):
 
         return {"recent_setlists": recent_setlists, "unique_songs": list(unique_songs)}
     else:
-        print(response.text)
         return {"error": "Failed to fetch data", "status_code": response.status_code}
 
 
@@ -110,7 +110,6 @@ def fetch_setlist(id):
         sets = data.get("sets", {}).get("set", [])
         if sets:
             songs_list = [song["name"] for song in sets[0].get("song", [])]
-            print(len(songs_list))
             return songs_list
 
     return {"error": "No setlist found", "status_code": response.status_code}
@@ -121,25 +120,34 @@ def fetch_setlist(id):
 async def login(
     request: Request, redirect_to_streamlit: bool = False, artist: str = None
 ):
-    auth_manager = get_auth_manager(request)
+    auth_manager = get_auth_manager()
     auth_url = auth_manager.get_authorize_url()
 
-    # If this is called from Streamlit, we'll need to return to Streamlit after auth
     if redirect_to_streamlit:
-        # Store artist in a server-side session if needed
         request.session["pending_artist"] = artist
-        # We'll redirect back to Streamlit after authentication
-        return RedirectResponse(url=auth_url)
 
     return RedirectResponse(url=auth_url)
 
 
+@app.get("/logout")
+def logout(response: Response):
+    """
+    Clears Spotify authentication cookies.
+    """
+    response.delete_cookie("spotify_auth")
+    return {"message": "Logged out successfully!"}
+
+
 @app.get("/callback")
 async def callback(request: Request, response: Response, code: Optional[str] = None):
+    """
+    Handles Spotify's OAuth callback and stores the token in cookies.
+    If coming from Streamlit, redirect back to Streamlit with `auth_success=true`.
+    """
     if code is None:
         return {"error": "No code provided"}
 
-    auth_manager = get_auth_manager(request)
+    auth_manager = get_auth_manager()
     token_info = auth_manager.get_access_token(code=code, check_cache=False)
 
     if not token_info:
@@ -149,16 +157,14 @@ async def callback(request: Request, response: Response, code: Optional[str] = N
     cache_handler = CookieCache()
     cache_handler.save_token_to_cache(token_info, response)
 
-    # Check if we need to redirect back to Streamlit
-    if request.session.get("pending_artist"):
-        artist = request.session.get("pending_artist")
-        streamlit_url = os.getenv("STREAMLIT_URL")
-        # Append query parameters to indicate successful auth
-        redirect_url = f"{streamlit_url}?auth_success=true&artist={artist}"
-        return RedirectResponse(url=redirect_url)
+    # Handle Streamlit redirection
+    artist = request.session.get("pending_artist")
+    if artist:
+        return RedirectResponse(
+            url=f"{STREAMLIT_URL}?auth_success=true&artist={artist}"
+        )
 
-    # Default success page
-    return RedirectResponse(url="/success")
+    return RedirectResponse(url=f"{STREAMLIT_URL}?auth_success=true")
 
 
 @app.get("/success")
