@@ -38,11 +38,13 @@ if "auth_success" in query_params and query_params["auth_success"][0] == "true":
 # **🔹 Login Button (Appears if user is not authenticated)**
 if not st.session_state.auth_completed:
     if st.button("Log in to Spotify 🎧"):
-        st.markdown(
-            f"[Click here to authenticate with Spotify]({SPOTIFY_AUTH_URL}?redirect_to_streamlit=true)"
-        )
         st.info(
             "You'll be redirected to Spotify for authentication. After authenticating, you'll return to this app."
+        )
+        spotify_login_url = f"{SPOTIFY_AUTH_URL}?redirect_to_streamlit=true"
+        st.markdown(
+            f'<meta http-equiv="refresh" content="0; URL={spotify_login_url}">',
+            unsafe_allow_html=True,
         )
 
 # Search for setlists
