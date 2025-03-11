@@ -60,6 +60,7 @@ else:
 artist = st.text_input(
     "Enter Artist Name:",
     key="artist_input",
+    placeholder="Weezer",
     on_change=lambda: set_artist(st.session_state.artist_input),
 )
 
@@ -95,18 +96,19 @@ with col2:
                 "⚠️ You need to log in to Spotify first before creating a playlist."
             )
         else:
-            response = requests.post(
-                f"{BACKEND_URL}/create-playlist/{artist}/",
-                cookies=st.session_state.get("cookies", {}),
-            )
+            with st.spinner("🎶 Creating your playlist... Please wait."):
+                response = requests.post(
+                    f"{BACKEND_URL}/create-playlist/{artist}/",
+                    cookies=st.session_state.get("cookies", {}),
+                )
 
-            if response.status_code == 200:
-                data = response.json()
-                if "playlist_url" in data:
-                    st.success(
-                        f"✅ Playlist Created! [Open Playlist]({data['playlist_url']})"
-                    )
+                if response.status_code == 200:
+                    data = response.json()
+                    if "playlist_url" in data:
+                        st.success(
+                            f"✅ Playlist Created! [Open Playlist]({data['playlist_url']})"
+                        )
+                    else:
+                        st.error(data.get("error", "⚠️ Failed to create playlist."))
                 else:
-                    st.error(data.get("error", "⚠️ Failed to create playlist."))
-            else:
-                st.error(f"⚠️ Error contacting backend: {response.text}")
+                    st.error(f"⚠️ Error contacting backend: {response.text}")
