@@ -65,31 +65,16 @@ artist = st.text_input(
 )
 
 # **🔹 Create Columns for Side-by-Side Buttons**
-col1, col2 = st.columns(2)  # Two equal-width columns
-
-with col1:
+buttons_container = st.container()
+with buttons_container:
     if st.button("Get Setlist"):
         response = requests.get(f"{BACKEND_URL}/search/{artist}")
         if response.status_code == 200:
-            data = response.json()
-            if "error" in data:
-                st.error(data["error"])
-            else:
-                st.write("### Consolidated Setlist from 3 last concerts:")
-                st.write("🎵 Songs:")
-                st.write("\n".join(f"- {song}" for song in data["unique_songs"]))
-                st.write("---")
-                st.write("### Last 3 concerts:")
-                for setlist in data["recent_setlists"]:
-                    st.write(f"📅 {setlist['eventDate']} - 📍 {setlist['venue']}")
-
-                # Store the artist in session state
-                st.session_state.artist = artist
+            st.session_state.setlist_data = response.json()
         else:
             st.error("Failed to fetch setlists.")
 
-# **🔹 Playlist Creation Button**
-with col2:
+    # **🔹 Playlist Creation Button**
     if st.button("Create Spotify Playlist"):
         if not st.session_state.auth_completed:
             st.error(
@@ -112,3 +97,19 @@ with col2:
                         st.error(data.get("error", "⚠️ Failed to create playlist."))
                 else:
                     st.error(f"⚠️ Error contacting backend: {response.text}")
+
+if "setlist_data" in st.session_state:
+    data = st.session_state.setlist_data
+    if "error" in data:
+        st.error(data["error"])
+    else:
+        st.write("### Consolidated Setlist from 3 last concerts:")
+        st.write("🎵 Songs:")
+        st.write("\n".join(f"- {song}" for song in data["unique_songs"]))
+        st.write("---")
+        st.write("### Last 3 concerts:")
+        for setlist in data["recent_setlists"]:
+            st.write(f"📅 {setlist['eventDate']} - 📍 {setlist['venue']}")
+
+        # Store the artist in session state
+        st.session_state.artist = artist
