@@ -1,6 +1,7 @@
 import os
 import requests
 import streamlit as st
+import time
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -46,6 +47,14 @@ if not st.session_state.auth_completed:
             f'<meta http-equiv="refresh" content="0; URL={spotify_login_url}">',
             unsafe_allow_html=True,
         )
+else:
+    if st.button("Logout from Spotify 🚪"):
+        requests.get(SPOTIFY_LOGOUT_URL)  # Call backend logout
+        st.session_state.auth_completed = False
+        st.session_state.cookies = {}
+        st.experimental_set_query_params()
+        time.sleep(0.5)
+        st.experimental_rerun()
 
 # Search for setlists
 artist = st.text_input(
@@ -54,52 +63,50 @@ artist = st.text_input(
     on_change=lambda: set_artist(st.session_state.artist_input),
 )
 
-if st.button("Search Setlists"):
-    response = requests.get(f"{BACKEND_URL}/search/{artist}")
-    if response.status_code == 200:
-        data = response.json()
-        if "error" in data:
-            st.error(data["error"])
-        else:
-            st.write("### Last 3 concerts:")
-            for setlist in data["recent_setlists"]:
-                st.write(f"📅 {setlist['eventDate']} - 📍 {setlist['venue']}")
-                st.write("---")
-            st.write("### Consolidated Setlist from 3 last concerts:")
-            st.write("🎵 Songs:")
-            st.write("\n".join(f"- {song}" for song in data["unique_songs"]))
-            st.write("---")
+# **🔹 Create Columns for Side-by-Side Buttons**
+col1, col2 = st.columns(2)  # Two equal-width columns
 
-            # Store the artist in session state
-            st.session_state.artist = artist
-    else:
-        st.error("Failed to fetch setlists.")
-
-# **🔹 Playlist Creation Button**
-if st.button("Create Spotify Playlist"):
-    if not st.session_state.auth_completed:
-        st.error("⚠️ You need to log in to Spotify first before creating a playlist.")
-    else:
-        response = requests.post(
-            f"{BACKEND_URL}/create-playlist/{artist}/",
-            cookies=st.session_state.get("cookies", {}),
-        )
-
+with col1:
+    if st.button("Get Setlist"):
+        response = requests.get(f"{BACKEND_URL}/search/{artist}")
         if response.status_code == 200:
             data = response.json()
-            if "playlist_url" in data:
-                st.success(
-                    f"✅ Playlist Created! [Open Playlist]({data['playlist_url']})"
-                )
+            if "error" in data:
+                st.error(data["error"])
             else:
-                st.error(data.get("error", "⚠️ Failed to create playlist."))
-        else:
-            st.error(f"⚠️ Error contacting backend: {response.text}")
+                st.write("### Consolidated Setlist from 3 last concerts:")
+                st.write("🎵 Songs:")
+                st.write("\n".join(f"- {song}" for song in data["unique_songs"]))
+                st.write("---")
+                st.write("### Last 3 concerts:")
+                for setlist in data["recent_setlists"]:
+                    st.write(f"📅 {setlist['eventDate']} - 📍 {setlist['venue']}")
 
-# **🔹 Logout Button (Appears if user is authenticated)**
-if st.session_state.auth_completed:
-    if st.button("Logout from Spotify 🚪"):
-        requests.get(SPOTIFY_LOGOUT_URL)  # Call backend logout
-        st.session_state.auth_completed = False
-        st.session_state.cookies = {}
-        st.experimental_rerun()
+                # Store the artist in session state
+                st.session_state.artist = artist
+        else:
+            st.error("Failed to fetch setlists.")
+
+# **🔹 Playlist Creation Button**
+with col2:
+    if st.button("Create Spotify Playlist"):
+        if not st.session_state.auth_completed:
+            st.error(
+                "⚠️ You need to log in to Spotify first before creating a playlist."
+            )
+        else:
+            response = requests.post(
+                f"{BACKEND_URL}/create-playlist/{artist}/",
+                cookies=st.session_state.get("cookies", {}),
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                if "playlist_url" in data:
+                    st.success(
+                        f"✅ Playlist Created! [Open Playlist]({data['playlist_url']})"
+                    )
+                else:
+                    st.error(data.get("error", "⚠️ Failed to create playlist."))
+            else:
+                st.error(f"⚠️ Error contacting backend: {response.text}")
