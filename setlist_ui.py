@@ -64,7 +64,6 @@ artist = st.text_input(
     on_change=lambda: set_artist(st.session_state.artist_input),
 )
 
-# **🔹 Create Columns for Side-by-Side Buttons**
 buttons_container = st.container()
 with buttons_container:
     if st.button("Get Setlist"):
