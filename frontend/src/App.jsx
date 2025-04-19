@@ -10,8 +10,8 @@ function App() {
   const [setlist, setSetlist] = useState(null);
   const [authCompleted, setAuthCompleted] = useState(false);
   const [playlistUrl, setPlaylistUrl] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
 
-  // Check URL params for auth callback
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('auth_success') === 'true') {
@@ -33,6 +33,7 @@ function App() {
   };
 
   const handleCreatePlaylist = async () => {
+    setIsCreating(true);
     try {
       const res = await fetch(`${BACKEND_URL}/create-playlist/${artist}/`, {
         method: 'POST',
@@ -47,6 +48,8 @@ function App() {
       }
     } catch (error) {
       console.error('Error creating playlist:', error);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -54,29 +57,34 @@ function App() {
     <div className="app">
       <h1>Setlist Maker 🎶</h1>
 
-      <SearchBar onSearch={handleSearch} />
+      <div className="main-content">
+        <SearchBar onSearch={handleSearch} />
 
-      {setlist && <SetlistResults setlist={setlist} />}
+        <div className="spotify-section">
+          <SpotifyAuth
+            artist={artist}
+            authCompleted={authCompleted}
+            onCreatePlaylist={handleCreatePlaylist}
+            isCreating={isCreating}
+          />
 
-      <SpotifyAuth
-        artist={artist}
-        authCompleted={authCompleted}
-        onCreatePlaylist={handleCreatePlaylist}
-      />
-
-      {playlistUrl && (
-        <div className="playlist-success">
-          <p>✅ Playlist created successfully!</p>
-          <a
-            href={playlistUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="playlist-link"
-          >
-            Open Playlist on Spotify
-          </a>
+          {playlistUrl && (
+            <div className="playlist-success">
+              <p>✨ Your playlist is ready!</p>
+              <a
+                href={playlistUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="playlist-link"
+              >
+                Open in Spotify
+              </a>
+            </div>
+          )}
         </div>
-      )}
+
+        {setlist && <SetlistResults setlist={setlist} />}
+      </div>
     </div>
   );
 }

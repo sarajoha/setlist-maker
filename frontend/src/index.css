@@ -164,3 +164,108 @@ h1 {
   cursor: default;
   border-radius: 4px;
 }
+
+/* Add these new styles */
+.main-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.spotify-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.playlist-success {
+  background: rgba(29, 185, 84, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.playlist-success p {
+  margin: 0 0 0.5rem 0;
+  color: #1DB954;
+  font-weight: 500;
+}
+
+.playlist-link {
+  color: #1DB954;
+  text-decoration: underline;
+}
+
+.playlist-link:hover {
+  color: #1ed760;
+}
+
+/* Loading animation styles */
+.loading-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.loading-dots {
+  display: inline-flex;
+}
+
+.loading-dots span {
+  animation: loadingDots 1.4s infinite;
+  opacity: 0;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.loading-notes {
+  display: inline-flex;
+  margin-left: 6px;
+}
+
+.loading-notes span {
+  animation: dance 1s infinite;
+  transform-origin: bottom;
+}
+
+.loading-notes span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-notes span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loadingDots {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+@keyframes dance {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-15deg);
+  }
+  75% {
+    transform: rotate(15deg);
+  }
+}
+
+/* Update button styles for disabled state */
+.btn:disabled {
+  background-color: #1DB954;
+  cursor: default;
+  opacity: 0.8;
+}

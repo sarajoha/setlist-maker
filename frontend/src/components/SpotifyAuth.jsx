@@ -2,7 +2,7 @@ import React from 'react';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-function SpotifyAuth({ artist, authCompleted, onCreatePlaylist }) {
+function SpotifyAuth({ artist, authCompleted, onCreatePlaylist, isCreating }) {
   if (!artist) return null;
 
   if (!authCompleted) {
@@ -10,14 +10,13 @@ function SpotifyAuth({ artist, authCompleted, onCreatePlaylist }) {
 
     return (
       <div className="spotify-auth">
-        <p>Please log in to Spotify to continue:</p>
         <a
           href={authUrl}
           className="btn"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Authenticate with Spotify
+          Connect with Spotify 🎧
         </a>
       </div>
     );
@@ -27,8 +26,21 @@ function SpotifyAuth({ artist, authCompleted, onCreatePlaylist }) {
     <button
       onClick={onCreatePlaylist}
       className="btn"
+      disabled={isCreating}
     >
-      Create Spotify Playlist
+      {isCreating ? (
+        <span className="loading-text">
+          Creating playlist
+          <span className="loading-dots">
+            <span>.</span><span>.</span><span>.</span>
+          </span>
+          <span className="loading-notes">
+            <span>🎵</span><span>🎶</span><span>🎵</span>
+          </span>
+        </span>
+      ) : (
+        'Create Spotify Playlist 🎶'
+      )}
     </button>
   );
 }
