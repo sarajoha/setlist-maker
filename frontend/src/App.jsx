@@ -9,6 +9,7 @@ function App() {
   const [artist, setArtist] = useState('');
   const [setlist, setSetlist] = useState(null);
   const [authCompleted, setAuthCompleted] = useState(false);
+  const [playlistUrl, setPlaylistUrl] = useState(null);
 
   // Check URL params for auth callback
   useEffect(() => {
@@ -38,8 +39,11 @@ function App() {
         credentials: 'include',
       });
       const data = await res.json();
+
       if (data.playlist_url) {
-        window.open(data.playlist_url, '_blank');
+        setPlaylistUrl(data.playlist_url);
+      } else if (data.error) {
+        console.error('Error:', data.error);
       }
     } catch (error) {
       console.error('Error creating playlist:', error);
@@ -59,6 +63,20 @@ function App() {
         authCompleted={authCompleted}
         onCreatePlaylist={handleCreatePlaylist}
       />
+
+      {playlistUrl && (
+        <div className="playlist-success">
+          <p>✅ Playlist created successfully!</p>
+          <a
+            href={playlistUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="playlist-link"
+          >
+            Open Playlist on Spotify
+          </a>
+        </div>
+      )}
     </div>
   );
 }

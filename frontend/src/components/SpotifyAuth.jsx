@@ -9,9 +9,14 @@ function SpotifyAuth({ artist, authCompleted, onCreatePlaylist }) {
     const authUrl = `${BACKEND_URL}/login?redirect_to_streamlit=true&artist=${encodeURIComponent(artist)}`;
 
     return (
-      <div>
+      <div className="spotify-auth">
         <p>Please log in to Spotify to continue:</p>
-        <a href={authUrl} target="_blank" rel="noopener noreferrer">
+        <a
+          href={authUrl}
+          className="spotify-login-button"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Authenticate with Spotify
         </a>
       </div>
@@ -19,7 +24,10 @@ function SpotifyAuth({ artist, authCompleted, onCreatePlaylist }) {
   }
 
   return (
-    <button onClick={onCreatePlaylist}>
+    <button
+      onClick={onCreatePlaylist}
+      className="create-playlist-button"
+    >
       Create Spotify Playlist
     </button>
   );

@@ -1,21 +1,16 @@
 import React from 'react';
 
 function SetlistResults({ setlist }) {
+  if (!setlist || !setlist.unique_songs) return null;
+
   return (
-    <div>
-      <h3>Setlist:</h3>
-      <ul>
-        {setlist.unique_songs.map((song, i) => (
-          <li key={i}>🎵 {song}</li>
+    <div className="setlist-results">
+      <h2>Recent Setlist for {setlist.recent_setlists[0].artist}</h2>
+      <ul className="songs-list">
+        {setlist.unique_songs.map((song, index) => (
+          <li key={index}>{song}</li>
         ))}
       </ul>
-      <hr />
-      <p>* consolidated list made from the last 3 concerts</p>
-      {setlist.recent_setlists.map((concert, idx) => (
-        <div key={idx}>
-          <p>📅 {concert.eventDate} - 📍 {concert.venue}</p>
-        </div>
-      ))}
     </div>
   );
 }
