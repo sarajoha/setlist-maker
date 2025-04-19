@@ -33,7 +33,7 @@ function App() {
 
   const handleCreatePlaylist = async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}/create-spotify-playlist/${artist}`, {
+      const res = await fetch(`${BACKEND_URL}/create-playlist/${artist}/`, {
         method: 'POST',
         credentials: 'include',
       });
