@@ -11,7 +11,7 @@ from typing import Optional
 from ytmusicapi.enums import ResponseStatus
 from ytmusicapi import YTMusic, OAuthCredentials
 
-from utils import get_auth_manager, get_spotify_client, CookieCache
+from backend.utils import get_auth_manager, get_spotify_client, CookieCache
 
 
 load_dotenv()
