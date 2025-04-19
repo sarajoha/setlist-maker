@@ -13,7 +13,7 @@ function SpotifyAuth({ artist, authCompleted, onCreatePlaylist }) {
         <p>Please log in to Spotify to continue:</p>
         <a
           href={authUrl}
-          className="spotify-login-button"
+          className="btn"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -26,7 +26,7 @@ function SpotifyAuth({ artist, authCompleted, onCreatePlaylist }) {
   return (
     <button
       onClick={onCreatePlaylist}
-      className="create-playlist-button"
+      className="btn"
     >
       Create Spotify Playlist
     </button>

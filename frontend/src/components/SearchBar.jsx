@@ -17,7 +17,7 @@ function SearchBar({ onSearch }) {
         placeholder="Enter artist name..."
         className="search-input"
       />
-      <button type="submit" className="search-button">
+      <button type="submit" className="btn">
         Search
       </button>
     </form>
