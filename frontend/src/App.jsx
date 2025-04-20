@@ -53,37 +53,55 @@ function App() {
     }
   };
 
+  const handleAuthSuccess = () => {
+    setAuthCompleted(true);
+  };
+
   return (
     <div className="app">
       <h1>Setlist Maker 🎶</h1>
 
       <div className="main-content">
-        <SearchBar onSearch={handleSearch} />
-
-        <div className="spotify-section">
-          <SpotifyAuth
-            artist={artist}
-            authCompleted={authCompleted}
-            onCreatePlaylist={handleCreatePlaylist}
-            isCreating={isCreating}
-          />
-
-          {playlistUrl && (
-            <div className="playlist-success">
-              <p>✨ Your playlist is ready!</p>
-              <a
-                href={playlistUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="playlist-link"
-              >
-                Open in Spotify
-              </a>
-            </div>
-          )}
+        <div className="step-container">
+          <h2 className="step-title">1. Search for an artist</h2>
+          <SearchBar onSearch={handleSearch} />
         </div>
 
-        {setlist && <SetlistResults setlist={setlist} />}
+        {setlist && (
+          <>
+            <div className="step-container">
+              <h2 className="step-title">2. Create your playlist</h2>
+              <div className="spotify-section">
+                <SpotifyAuth
+                  artist={artist}
+                  authCompleted={authCompleted}
+                  onCreatePlaylist={handleCreatePlaylist}
+                  isCreating={isCreating}
+                  onAuthSuccess={handleAuthSuccess}
+                />
+
+                {playlistUrl && (
+                  <div className="playlist-success">
+                    <p>✨ Your playlist is ready!</p>
+                    <a
+                      href={playlistUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="playlist-link"
+                    >
+                      Open in Spotify
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="step-container">
+              <h2 className="step-title">3. Preview setlist</h2>
+              <SetlistResults setlist={setlist} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

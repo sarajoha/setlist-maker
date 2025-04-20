@@ -4,7 +4,7 @@ import spotipy
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Response, Depends
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from typing import Optional
@@ -138,11 +138,11 @@ def logout(response: Response):
     return {"message": "Logged out successfully!"}
 
 
-@app.get("/callback")
+@app.get("/callback", response_class=HTMLResponse)
 async def callback(request: Request, response: Response, code: Optional[str] = None):
     """
     Handles Spotify's OAuth callback and stores the token in cookies.
-    If coming from Streamlit, redirect back to Streamlit with `auth_success=true`.
+    Automatically closes the popup and sends success message to parent window.
     """
     if code is None:
         return {"error": "No code provided"}
@@ -157,14 +157,65 @@ async def callback(request: Request, response: Response, code: Optional[str] = N
     cache_handler = CookieCache()
     cache_handler.save_token_to_cache(token_info, response)
 
-    # Handle Streamlit redirection
+    # Handle redirection
     artist = request.session.get("pending_artist")
-    if artist:
-        return RedirectResponse(
-            url=f"{STREAMLIT_URL}?auth_success=true&artist={artist}"
-        )
 
-    return RedirectResponse(url=f"{STREAMLIT_URL}?auth_success=true")
+    return (
+        """
+        <html>
+        <head>
+            <title>Authentication Successful</title>
+            <style>
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    margin: 0;
+                    background: #121212;
+                    color: white;
+                }
+                .container {
+                    text-align: center;
+                    animation: fadeOut 1s ease-in-out 1s forwards;
+                }
+                @keyframes fadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>✅ Successfully connected with Spotify!</h2>
+                <p>This window will close automatically...</p>
+            </div>
+            <script>
+                // Send success message to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'SPOTIFY_AUTH_SUCCESS',
+                        artist: '"""
+        + (artist or "")
+        + """'
+                    }, '*');
+
+                    // Close the popup after a short delay
+                    setTimeout(() => {
+                        window.close();
+                    }, 1500);
+                } else {
+                    // Fallback for non-popup scenarios
+                    window.location.href = '/?auth_success=true&artist="""
+        + (artist or "")
+        + """';
+                }
+            </script>
+        </body>
+        </html>
+    """
+    )
 
 
 @app.get("/success")
