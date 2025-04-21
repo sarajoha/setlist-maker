@@ -2,11 +2,9 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -22,59 +20,111 @@ a:hover {
   color: #535bf2;
 }
 
+/* Reset box-sizing for all elements */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Prevent horizontal scroll */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   width: 100%;
-  overflow-x: hidden;
 }
 
 h1 {
-  font-size: 3.2em;
+  font-size: 2.5em;
   line-height: 1.1;
   color: #1DB954;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2em;
+    margin-bottom: 1rem;
+  }
 }
 
 #root {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0.5rem;
   text-align: center;
+  overflow: hidden;
 }
 
 .app {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 80vh;
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
-  box-sizing: border-box;
+  padding: 1rem 0;
+}
+
+.main-content {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 0;
+}
+
+.step-container {
+  width: 100%;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  margin: 0;
+}
+
+.step-title {
+  font-size: 1.25rem;
+  margin: 0 0 1rem 0;
+  color: #1DB954;
+  font-weight: 500;
+}
+
+.spotify-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 .search-container {
   width: 100%;
   max-width: 500px;
-  margin: 0 auto 2rem auto;
+  margin: 0 auto;
   display: flex;
   gap: 10px;
-  justify-content: center;
+  padding: 0;
 }
 
 .search-input {
   flex: 1;
-  padding: 10px 15px;
+  padding: 12px 15px;
   border: 2px solid #1DB954;
   border-radius: 20px;
-  font-size: 1rem;
+  font-size: 16px;
   outline: none;
   transition: border-color 0.2s;
+  min-width: 0;
+  background: transparent;
+  color: inherit;
 }
 
 .search-input:focus {
@@ -324,4 +374,132 @@ h1 {
   background-color: #1DB954;
   cursor: default;
   opacity: 0.8;
+}
+
+/* Enhanced mobile responsiveness */
+@media (max-width: 640px) {
+  #root {
+    padding: 0.5rem;
+  }
+
+  .app {
+    padding: 0.5rem;
+  }
+
+  .search-container {
+    flex-direction: column;
+    padding: 0 0.5rem;
+    gap: 8px;
+  }
+
+  .search-input,
+  .btn {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .btn {
+    padding: 10px 16px;
+  }
+
+  .step-container {
+    padding: 0.75rem;
+  }
+
+  .setlist-results {
+    padding: 0 0.5rem;
+  }
+
+  .setlist-track {
+    font-size: 0.9em;
+    padding: 0.5rem;
+  }
+}
+
+/* Add better touch handling for mobile */
+@media (hover: none) {
+  .btn:active {
+    background-color: #1ed760;
+    transform: scale(0.98);
+  }
+
+  .search-input {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Fix iOS input styles */
+input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: 20px;
+}
+
+/* Fix iOS button styles */
+button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Ensure content doesn't overflow viewport */
+.main-content {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+/* Update loading animation container */
+.loading-container {
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+/* Make sure setlist results don't overflow */
+.setlist-results {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Ensure consistent spacing */
+.setlist-results {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.setlist-tracks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.loading-container {
+  width: 100%;
+  padding: 1rem 0;
+  margin: 0;
+}
+
+/* Fix iOS specific issues */
+input {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Prevent text zoom on mobile */
+@media screen and (max-width: 768px) {
+  input, button {
+    font-size: 16px !important;
+  }
 }
